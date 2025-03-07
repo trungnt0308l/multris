@@ -53,7 +53,8 @@ wss.on('connection', (ws) => {
                     players: [{ ws, id: 1, name: data.name || `Player 1`, board: Array(20).fill().map(() => Array(10).fill(0)), gameOver: false, score: 0 }],
                     pieceQueue: [],
                     random: seededRandom(parseInt(gameId, 36)),
-                    started: false
+                    started: false,
+                    level: 1 // Start at level 1
                 };
                 fillPieceQueue(games[gameId]);
                 ws.send(JSON.stringify({ type: 'gameCreated', gameId, playerId: 1, name: data.name || `Player 1` }));
@@ -62,14 +63,9 @@ wss.on('connection', (ws) => {
 
             case 'joinGame':
                 const joinGameId = data.gameId;
-                if (!joinGameId) {
-                    ws.send(JSON.stringify({ type: 'error', message: 'Game ID required' }));
-                    console.log('Join attempt failed: No gameId provided');
-                    return;
-                }
-                if (!games[joinGameId]) {
-                    ws.send(JSON.stringify({ type: 'error', message: 'Game not found' }));
-                    console.log(`Join attempt failed: Game ${joinGameId} not found`);
+                if (!joinGameId || !games[joinGameId]) {
+                    ws.send(JSON.stringify({ type: 'error', message: joinGameId ? 'Game not found' : 'Game ID required' }));
+                    console.log(`Join attempt failed: Game ${joinGameId || 'not provided'} not found`);
                     return;
                 }
                 if (games[joinGameId].started) {
@@ -94,7 +90,7 @@ wss.on('connection', (ws) => {
                 games[data.gameId].started = true;
                 fillPieceQueue(games[data.gameId]);
                 const firstPiece = games[data.gameId].pieceQueue.shift();
-                broadcast(data.gameId, { type: 'gameStarted', piece: firstPiece });
+                broadcast(data.gameId, { type: 'gameStarted', piece: firstPiece, level: games[data.gameId].level });
                 fillPieceQueue(games[data.gameId]);
                 console.log(`Game ${data.gameId} started`);
                 break;
@@ -104,7 +100,13 @@ wss.on('connection', (ws) => {
                 if (!game || game.players[data.playerId - 1].gameOver) return;
                 const linesCleared = data.linesCleared;
                 game.players[data.playerId - 1].board = data.board;
-                game.players[data.playerId - 1].score = data.score; // Update score
+                game.players[data.playerId - 1].score = data.score;
+                const newLevel = Math.floor(data.score / 100) + 1;
+                if (newLevel > game.level) {
+                    game.level = newLevel;
+                    broadcast(data.gameId, { type: 'levelUp', level: game.level });
+                    console.log(`Game ${data.gameId} leveled up to ${game.level}`);
+                }
                 if (linesCleared > 0) {
                     const currentIndex = game.players.findIndex(p => p.id === data.playerId);
                     let nextPlayer = null;
