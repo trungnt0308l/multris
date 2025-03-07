@@ -54,10 +54,11 @@ wss.on('connection', (ws) => {
                     pieceQueue: [],
                     random: seededRandom(parseInt(gameId, 36)),
                     started: false,
-                    level: 1 // Start at level 1
+                    level: 1
                 };
                 fillPieceQueue(games[gameId]);
                 ws.send(JSON.stringify({ type: 'gameCreated', gameId, playerId: 1, name: data.name || `Player 1` }));
+                broadcastScores(gameId); // Initial score broadcast
                 console.log(`Game ${gameId} created by ${data.name || 'Player 1'}`);
                 break;
 
@@ -82,6 +83,7 @@ wss.on('connection', (ws) => {
                 games[joinGameId].players.push({ ws, id: playerId, name: data.name || `Player ${playerId}`, board: Array(20).fill().map(() => Array(10).fill(0)), gameOver: false, score: 0 });
                 ws.send(JSON.stringify({ type: 'gameJoined', gameId: joinGameId, playerId, name: data.name || `Player ${playerId}` }));
                 broadcast(joinGameId, { type: 'playerJoined', playerId, name: data.name || `Player ${playerId}` });
+                broadcastScores(joinGameId); // Update scores when a player joins
                 console.log(`${data.name || `Player ${playerId}`} joined game ${joinGameId}`);
                 break;
 
@@ -136,6 +138,7 @@ wss.on('connection', (ws) => {
                 const nextPiece = game.pieceQueue.shift();
                 broadcast(data.gameId, { type: 'nextPiece', piece: nextPiece });
                 fillPieceQueue(game);
+                broadcastScores(data.gameId); // Broadcast updated scores
                 break;
 
             case 'gameOver':
@@ -144,6 +147,7 @@ wss.on('connection', (ws) => {
                 g.players[data.playerId - 1].gameOver = true;
                 g.players[data.playerId - 1].score = data.score;
                 broadcast(data.gameId, { type: 'playerOut', playerId: data.playerId, name: g.players[data.playerId - 1].name });
+                broadcastScores(data.gameId); // Update scores when a player is out
                 const activePlayers = g.players.filter(p => !p.gameOver);
                 if (activePlayers.length <= 1) {
                     const results = g.players.map(p => ({
@@ -200,6 +204,16 @@ function broadcast(gameId, message) {
             player.ws.send(JSON.stringify(message));
         }
     });
+}
+
+function broadcastScores(gameId) {
+    if (!games[gameId]) return;
+    const scores = games[gameId].players.map(p => ({
+        name: p.name,
+        score: p.score,
+        gameOver: p.gameOver
+    }));
+    broadcast(gameId, { type: 'updateScores', scores });
 }
 
 server.listen(process.env.PORT || 8080, () => {
