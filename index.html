@@ -154,6 +154,17 @@
             align-items: flex-start;
         }
 
+        .grid-container {
+            text-align: center;
+        }
+
+        .player-name {
+            font-size: 18px;
+            color: #00d4ff;
+            text-shadow: 0 0 5px #00d4ff;
+            margin-bottom: 10px;
+        }
+
         .grid {
             display: grid;
             grid-template-columns: repeat(10, 25px);
@@ -168,13 +179,9 @@
         .next-piece-container {
             margin-left: 20px;
             text-align: center;
-        }
-
-        .next-piece-label {
-            font-size: 14px;
-            color: #00d4ff;
-            text-shadow: 0 0 5px #00d4ff;
-            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .next-piece-grid {
@@ -186,6 +193,13 @@
             height: 108px;
             border-radius: 5px;
             padding: 5px;
+        }
+
+        .score, .level {
+            margin-top: 10px;
+            font-size: 16px;
+            color: #00d4ff;
+            text-shadow: 0 0 5px #00d4ff;
         }
 
         .cell {
@@ -212,14 +226,6 @@
         .active-Z { background: #f44336; box-shadow: 0 0 10px #f44336; animation: glow 1s infinite alternate; }
         .active-J { background: #1976d2; box-shadow: 0 0 10px #1976d2; animation: glow 1s infinite alternate; }
         .active-L { background: #ff9800; box-shadow: 0 0 10px #ff9800; animation: glow 1s infinite alternate; }
-
-        .score {
-            text-align: center;
-            margin-top: 15px;
-            font-size: 18px;
-            color: #00d4ff;
-            text-shadow: 0 0 5px #00d4ff;
-        }
 
         .dashboard {
             display: none;
@@ -297,12 +303,15 @@
             </div>
         </div>
         <div class="player-board" id="playerBoard">
-            <div class="grid" id="grid"></div>
-            <div class="next-piece-container">
-                <div class="next-piece-label">Next Piece</div>
-                <div class="next-piece-grid" id="nextPieceGrid"></div>
+            <div class="grid-container">
+                <div class="player-name" id="playerName"></div>
+                <div class="grid" id="grid"></div>
             </div>
-            <div class="score" id="score">Score: 0</div>
+            <div class="next-piece-container">
+                <div class="next-piece-grid" id="nextPieceGrid"></div>
+                <div class="score" id="score">Score: 0</div>
+                <div class="level" id="level">Level: 1</div>
+            </div>
         </div>
         <div class="dashboard" id="dashboard">
             <h2>Game Results</h2>
@@ -370,7 +379,7 @@
                 case 'gameStarted':
                     if (game) {
                         console.log(`Starting game for ${game.name} with piece:`, data.piece);
-                        game.startGame(data.piece);
+                        game.startGame(data.piece, data.level);
                         document.getElementById('status').textContent = 'Game Started!';
                     } else {
                         console.error('Game not initialized for player when gameStarted received');
@@ -393,6 +402,12 @@
                     if (game) {
                         document.getElementById('status').textContent = data.winner ? `Game Over! ${data.results.find(p => p.id === data.winner).name} wins!` : 'Game Over! No winner.';
                         showDashboard(data.results, data.winner);
+                    }
+                    break;
+                case 'levelUp':
+                    if (game && !game.gameOver) {
+                        game.setLevel(data.level);
+                        document.getElementById('status').textContent = `Level Up! Now at Level ${data.level}`;
                     }
                     break;
                 case 'error':
@@ -463,15 +478,21 @@
                 this.grid = document.getElementById('grid');
                 this.nextPieceGrid = document.getElementById('nextPieceGrid');
                 this.scoreElement = document.getElementById('score');
+                this.levelElement = document.getElementById('level');
+                this.playerNameElement = document.getElementById('playerName');
                 this.board = Array(20).fill().map(() => Array(10).fill(0));
                 this.currentPiece = null;
                 this.currentPieceType = null;
                 this.piecePosition = { x: 0, y: 0 };
                 this.gameOver = false;
                 this.score = 0;
+                this.level = 1;
+                this.baseSpeed = 500; // Base interval in ms
                 this.pieceQueue = [];
+                this.dropInterval = null;
                 this.initGrid();
                 this.initNextPieceGrid();
+                this.playerNameElement.textContent = this.name;
             }
 
             initGrid() {
@@ -497,6 +518,7 @@
                 if (!this.canPlacePiece()) {
                     this.gameOver = true;
                     this.grid.style.opacity = '0.5';
+                    clearInterval(this.dropInterval);
                     ws.send(JSON.stringify({ type: 'gameOver', gameId: this.gameId, playerId: this.playerId, score: this.score }));
                     document.getElementById('status').textContent = `${this.name} is out!`;
                 }
@@ -558,6 +580,10 @@
                     }
                     this.score += linesCleared * 10;
                     this.scoreElement.textContent = `Score: ${this.score}`;
+                    const newLevel = Math.floor(this.score / 100) + 1;
+                    if (newLevel > this.level) {
+                        this.setLevel(newLevel);
+                    }
                 }
 
                 ws.send(JSON.stringify({
@@ -576,6 +602,7 @@
                 if (!this.canPlacePiece()) {
                     this.gameOver = true;
                     this.grid.style.opacity = '0.5';
+                    clearInterval(this.dropInterval);
                     ws.send(JSON.stringify({ type: 'gameOver', gameId: this.gameId, playerId: this.playerId, score: this.score }));
                     document.getElementById('status').textContent = `${this.name} is out!`;
                 }
@@ -693,11 +720,19 @@
                 }
             }
 
-            startGame(piece) {
+            setLevel(level) {
+                this.level = level;
+                this.levelElement.textContent = `Level: ${this.level}`;
+                clearInterval(this.dropInterval);
+                const speed = this.baseSpeed * Math.pow(0.9, this.level - 1); // 10% faster per level
+                this.dropInterval = setInterval(() => this.update(), speed);
+            }
+
+            startGame(piece, initialLevel) {
                 this.gameStarted = true;
                 document.getElementById('playerBoard').style.display = 'flex';
+                this.setLevel(initialLevel || 1);
                 this.spawnPiece(piece);
-                setInterval(() => this.update(), 500);
             }
 
             queuePiece(piece) {
