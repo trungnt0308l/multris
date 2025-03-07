@@ -25,9 +25,47 @@
             backdrop-filter: blur(10px);
         }
 
+        .name-entry {
+            text-align: center;
+        }
+
+        .name-entry input {
+            padding: 10px;
+            margin: 10px;
+            border: 2px solid #00d4ff;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .name-entry input:focus {
+            border-color: #ff007a;
+        }
+
+        .name-entry button {
+            padding: 10px 20px;
+            background: #ff007a;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: 0 4px 10px rgba(255, 0, 122, 0.5);
+        }
+
+        .name-entry button:hover {
+            transform: scale(1.05);
+            background: #ff4da6;
+        }
+
         .controls {
             margin-bottom: 20px;
             text-align: center;
+            display: none;
         }
 
         .controls button {
@@ -112,6 +150,8 @@
             display: none;
             position: relative;
             overflow: hidden;
+            display: flex;
+            align-items: flex-start;
         }
 
         .grid {
@@ -121,6 +161,29 @@
             background: #1e1e2f;
             width: 270px;
             height: 540px;
+            border-radius: 5px;
+            padding: 5px;
+        }
+
+        .next-piece-container {
+            margin-left: 20px;
+            text-align: center;
+        }
+
+        .next-piece-label {
+            font-size: 14px;
+            color: #00d4ff;
+            text-shadow: 0 0 5px #00d4ff;
+            margin-bottom: 10px;
+        }
+
+        .next-piece-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 25px);
+            grid-gap: 2px;
+            background: #1e1e2f;
+            width: 108px;
+            height: 108px;
             border-radius: 5px;
             padding: 5px;
         }
@@ -140,7 +203,7 @@
         .filled-Z { background: #f44336; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
         .filled-J { background: #1976d2; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
         .filled-L { background: #ff9800; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
-        .filled-G { background: #757575; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); } /* Gray for garbage */
+        .filled-G { background: #757575; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
 
         .active-I { background: #00d4ff; box-shadow: 0 0 10px #00d4ff; animation: glow 1s infinite alternate; }
         .active-O { background: #ffeb3b; box-shadow: 0 0 10px #ffeb3b; animation: glow 1s infinite alternate; }
@@ -156,6 +219,50 @@
             font-size: 18px;
             color: #00d4ff;
             text-shadow: 0 0 5px #00d4ff;
+        }
+
+        .dashboard {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .dashboard h2 {
+            font-size: 20px;
+            color: #00d4ff;
+            text-shadow: 0 0 5px #00d4ff;
+            margin-bottom: 15px;
+        }
+
+        .dashboard ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .dashboard li {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .dashboard button {
+            padding: 10px 20px;
+            margin-top: 15px;
+            background: #ff007a;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: 0 4px 10px rgba(255, 0, 122, 0.5);
+        }
+
+        .dashboard button:hover {
+            transform: scale(1.05);
+            background: #ff4da6;
         }
 
         @keyframes pulse {
@@ -174,7 +281,11 @@
 </head>
 <body>
     <div class="game-container">
-        <div class="controls">
+        <div class="name-entry" id="nameEntry">
+            <input id="nameInput" type="text" placeholder="Enter your name" maxlength="20">
+            <button id="submitName">Play</button>
+        </div>
+        <div class="controls" id="controls">
             <button id="createGame">Create Game</button>
             <button id="joinGame">Join Game</button>
             <input id="gameIdInput" type="text" placeholder="Enter Game ID">
@@ -187,17 +298,44 @@
         </div>
         <div class="player-board" id="playerBoard">
             <div class="grid" id="grid"></div>
+            <div class="next-piece-container">
+                <div class="next-piece-label">Next Piece</div>
+                <div class="next-piece-grid" id="nextPieceGrid"></div>
+            </div>
             <div class="score" id="score">Score: 0</div>
+        </div>
+        <div class="dashboard" id="dashboard">
+            <h2>Game Results</h2>
+            <ul id="resultsList"></ul>
+            <button id="playAgain">Play Again</button>
         </div>
     </div>
 
     <script>
         const ws = new WebSocket(`wss://${window.location.hostname}`);
         let game = null;
+        let playerName = '';
+
+        document.getElementById('submitName').addEventListener('click', () => {
+            const name = document.getElementById('nameInput').value.trim();
+            if (name) {
+                playerName = name;
+                document.getElementById('nameEntry').style.display = 'none';
+                document.getElementById('controls').style.display = 'block';
+                document.getElementById('status').textContent = `Welcome, ${playerName}! Controls: ← (Left), → (Right), ↓ (Down), ↑ (Rotate)`;
+            } else {
+                alert('Please enter a name!');
+            }
+        });
 
         ws.onopen = () => {
             console.log('Connected to server');
             ws.send(JSON.stringify({ type: 'listGames' }));
+            setInterval(() => {
+                if (!game) {
+                    ws.send(JSON.stringify({ type: 'listGames' }));
+                }
+            }, 5000);
         };
 
         ws.onerror = (error) => {
@@ -206,56 +344,60 @@
 
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
+            console.log('Received message:', data);
 
             switch (data.type) {
                 case 'gameCreated':
-                    game = new Multris(data.playerId, data.gameId, true);
+                    game = new Multris(data.playerId, data.gameId, true, data.name);
                     document.getElementById('gameIdInput').value = data.gameId;
                     document.getElementById('status').textContent = `Game created! ID: ${data.gameId}. Waiting for players...`;
                     document.getElementById('startGame').style.display = 'block';
                     document.getElementById('gameList').style.display = 'none';
                     break;
-
                 case 'gameJoined':
-                    game = new Multris(data.playerId, data.gameId, false);
-                    document.getElementById('status').textContent = `Joined game ${data.gameId} as Player ${data.playerId}. Waiting for host...`;
+                    game = new Multris(data.playerId, data.gameId, false, data.name);
+                    document.getElementById('status').textContent = `Joined game ${data.gameId} as ${data.name}. Waiting for host...`;
                     document.getElementById('createGame').style.display = 'none';
                     document.getElementById('joinGame').style.display = 'none';
                     document.getElementById('gameIdInput').disabled = true;
                     document.getElementById('gameList').style.display = 'none';
                     break;
-
                 case 'playerJoined':
-                    document.getElementById('status').textContent += ` Player ${data.playerId} joined!`;
+                    if (game) {
+                        document.getElementById('status').textContent += ` ${data.name} joined!`;
+                    }
                     break;
-
                 case 'gameStarted':
-                    game.startGame(data.piece);
-                    document.getElementById('status').textContent = 'Game Started!';
+                    if (game) {
+                        console.log(`Starting game for ${game.name} with piece:`, data.piece);
+                        game.startGame(data.piece);
+                        document.getElementById('status').textContent = 'Game Started!';
+                    } else {
+                        console.error('Game not initialized for player when gameStarted received');
+                    }
                     break;
-
                 case 'nextPiece':
                     if (!game.gameOver) {
                         game.queuePiece(data.piece);
                     }
                     break;
-
                 case 'addLines':
                     if (!game.gameOver) game.addLines(data.board);
                     break;
-
                 case 'playerOut':
-                    document.getElementById('status').textContent = `Player ${data.playerId} is out!`;
+                    if (game) {
+                        document.getElementById('status').textContent = `${data.name} is out!`;
+                    }
                     break;
-
                 case 'gameEnded':
-                    document.getElementById('status').textContent = data.winner ? `Game Over! Player ${data.winner} wins!` : 'Game Over! No winner.';
+                    if (game) {
+                        document.getElementById('status').textContent = data.winner ? `Game Over! ${data.results.find(p => p.id === data.winner).name} wins!` : 'Game Over! No winner.';
+                        showDashboard(data.results, data.winner);
+                    }
                     break;
-
                 case 'error':
                     alert(data.message);
                     break;
-
                 case 'gameList':
                     if (!game) {
                         const gameListUl = document.getElementById('gameListUl');
@@ -280,15 +422,46 @@
 
         function joinGameFromList(gameId) {
             document.getElementById('gameIdInput').value = gameId;
-            ws.send(JSON.stringify({ type: 'joinGame', gameId }));
+            ws.send(JSON.stringify({ type: 'joinGame', gameId, name: playerName }));
         }
 
+        function showDashboard(results, winner) {
+            document.getElementById('playerBoard').style.display = 'none';
+            const dashboard = document.getElementById('dashboard');
+            const resultsList = document.getElementById('resultsList');
+            resultsList.innerHTML = '';
+            const sortedResults = results.sort((a, b) => b.score - a.score || (a.gameOver === b.gameOver ? 0 : a.gameOver ? -1 : 1));
+            sortedResults.forEach((player, index) => {
+                const li = document.createElement('li');
+                li.textContent = `${index + 1}. ${player.name} - Score: ${player.score}${player.id === winner ? ' (Winner)' : ''}`;
+                resultsList.appendChild(li);
+            });
+            dashboard.style.display = 'block';
+        }
+
+        document.getElementById('playAgain').addEventListener('click', () => {
+            game = null;
+            playerName = '';
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('nameEntry').style.display = 'block';
+            document.getElementById('controls').style.display = 'none';
+            document.getElementById('playerBoard').style.display = 'none';
+            document.getElementById('gameIdInput').value = '';
+            document.getElementById('gameIdInput').disabled = false;
+            document.getElementById('createGame').style.display = 'inline';
+            document.getElementById('joinGame').style.display = 'inline';
+            document.getElementById('startGame').style.display = 'none';
+            document.getElementById('status').textContent = 'Welcome to Multris! Controls: ← (Left), → (Right), ↓ (Down), ↑ (Rotate)';
+        });
+
         class Multris {
-            constructor(playerId, gameId, isHost) {
+            constructor(playerId, gameId, isHost, name) {
                 this.playerId = playerId;
                 this.gameId = gameId;
                 this.isHost = isHost;
+                this.name = name;
                 this.grid = document.getElementById('grid');
+                this.nextPieceGrid = document.getElementById('nextPieceGrid');
                 this.scoreElement = document.getElementById('score');
                 this.board = Array(20).fill().map(() => Array(10).fill(0));
                 this.currentPiece = null;
@@ -298,6 +471,7 @@
                 this.score = 0;
                 this.pieceQueue = [];
                 this.initGrid();
+                this.initNextPieceGrid();
             }
 
             initGrid() {
@@ -308,6 +482,14 @@
                 }
             }
 
+            initNextPieceGrid() {
+                for (let i = 0; i < 16; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    this.nextPieceGrid.appendChild(cell);
+                }
+            }
+
             spawnPiece(piece) {
                 this.currentPiece = piece.shape;
                 this.currentPieceType = piece.type;
@@ -315,8 +497,8 @@
                 if (!this.canPlacePiece()) {
                     this.gameOver = true;
                     this.grid.style.opacity = '0.5';
-                    ws.send(JSON.stringify({ type: 'gameOver', gameId: this.gameId, playerId: this.playerId }));
-                    document.getElementById('status').textContent = `Player ${this.playerId} is out!`;
+                    ws.send(JSON.stringify({ type: 'gameOver', gameId: this.gameId, playerId: this.playerId, score: this.score }));
+                    document.getElementById('status').textContent = `${this.name} is out!`;
                 }
                 this.render();
             }
@@ -383,7 +565,8 @@
                     gameId: this.gameId,
                     playerId: this.playerId,
                     linesCleared,
-                    board: this.board
+                    board: this.board,
+                    score: this.score
                 }));
             }
 
@@ -393,8 +576,8 @@
                 if (!this.canPlacePiece()) {
                     this.gameOver = true;
                     this.grid.style.opacity = '0.5';
-                    ws.send(JSON.stringify({ type: 'gameOver', gameId: this.gameId, playerId: this.playerId }));
-                    document.getElementById('status').textContent = `Player ${this.playerId} is out!`;
+                    ws.send(JSON.stringify({ type: 'gameOver', gameId: this.gameId, playerId: this.playerId, score: this.score }));
+                    document.getElementById('status').textContent = `${this.name} is out!`;
                 }
             }
 
@@ -476,6 +659,32 @@
                         }
                     }
                 }
+                this.renderNextPiece();
+            }
+
+            renderNextPiece() {
+                const cells = this.nextPieceGrid.children;
+                for (let i = 0; i < 16; i++) {
+                    cells[i].className = 'cell';
+                }
+                if (this.pieceQueue.length > 0) {
+                    const nextPiece = this.pieceQueue[0];
+                    const shape = nextPiece.shape;
+                    const type = nextPiece.type;
+                    const offsetX = Math.floor((4 - shape[0].length) / 2);
+                    const offsetY = Math.floor((4 - shape.length) / 2);
+                    for (let y = 0; y < shape.length; y++) {
+                        for (let x = 0; x < shape[y].length; x++) {
+                            if (shape[y][x]) {
+                                const gridX = offsetX + x;
+                                const gridY = offsetY + y;
+                                if (gridX >= 0 && gridX < 4 && gridY >= 0 && gridY < 4) {
+                                    cells[gridY * 4 + gridX].className = `cell filled-${type}`;
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             update() {
@@ -486,7 +695,7 @@
 
             startGame(piece) {
                 this.gameStarted = true;
-                document.getElementById('playerBoard').style.display = 'block';
+                document.getElementById('playerBoard').style.display = 'flex';
                 this.spawnPiece(piece);
                 setInterval(() => this.update(), 500);
             }
@@ -496,11 +705,12 @@
                 if (!this.currentPiece && !this.gameOver) {
                     this.spawnPiece(this.pieceQueue.shift());
                 }
+                this.render();
             }
         }
 
         document.getElementById('createGame').addEventListener('click', () => {
-            ws.send(JSON.stringify({ type: 'createGame' }));
+            ws.send(JSON.stringify({ type: 'createGame', name: playerName }));
         });
 
         document.getElementById('joinGame').addEventListener('click', () => {
@@ -509,7 +719,7 @@
                 alert('Please enter a Game ID!');
                 return;
             }
-            ws.send(JSON.stringify({ type: 'joinGame', gameId }));
+            ws.send(JSON.stringify({ type: 'joinGame', gameId, name: playerName }));
         });
 
         document.getElementById('startGame').addEventListener('click', () => {
