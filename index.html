@@ -202,6 +202,31 @@
             text-shadow: 0 0 5px #00d4ff;
         }
 
+        .live-dashboard {
+            margin-top: 15px;
+            width: 100%;
+            max-width: 108px;
+            text-align: left;
+        }
+
+        .live-dashboard ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .live-dashboard li {
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #fff;
+            text-shadow: 0 0 3px rgba(255, 255, 255, 0.5);
+        }
+
+        .live-dashboard .out {
+            color: #f44336;
+            text-decoration: line-through;
+        }
+
         .cell {
             width: 25px;
             height: 25px;
@@ -311,6 +336,9 @@
                 <div class="next-piece-grid" id="nextPieceGrid"></div>
                 <div class="score" id="score">Score: 0</div>
                 <div class="level" id="level">Level: 1</div>
+                <div class="live-dashboard" id="liveDashboard">
+                    <ul id="liveScores"></ul>
+                </div>
             </div>
         </div>
         <div class="dashboard" id="dashboard">
@@ -410,6 +438,11 @@
                         document.getElementById('status').textContent = `Level Up! Now at Level ${data.level}`;
                     }
                     break;
+                case 'updateScores':
+                    if (game && !game.gameOver) {
+                        game.updateLiveScores(data.scores);
+                    }
+                    break;
                 case 'error':
                     alert(data.message);
                     break;
@@ -480,6 +513,7 @@
                 this.scoreElement = document.getElementById('score');
                 this.levelElement = document.getElementById('level');
                 this.playerNameElement = document.getElementById('playerName');
+                this.liveScoresElement = document.getElementById('liveScores');
                 this.board = Array(20).fill().map(() => Array(10).fill(0));
                 this.currentPiece = null;
                 this.currentPieceType = null;
@@ -487,7 +521,7 @@
                 this.gameOver = false;
                 this.score = 0;
                 this.level = 1;
-                this.baseSpeed = 500; // Base interval in ms
+                this.baseSpeed = 500;
                 this.pieceQueue = [];
                 this.dropInterval = null;
                 this.initGrid();
@@ -724,8 +758,20 @@
                 this.level = level;
                 this.levelElement.textContent = `Level: ${this.level}`;
                 clearInterval(this.dropInterval);
-                const speed = this.baseSpeed * Math.pow(0.9, this.level - 1); // 10% faster per level
+                const speed = this.baseSpeed * Math.pow(0.9, this.level - 1);
                 this.dropInterval = setInterval(() => this.update(), speed);
+            }
+
+            updateLiveScores(scores) {
+                this.liveScoresElement.innerHTML = '';
+                scores.forEach(player => {
+                    const li = document.createElement('li');
+                    li.textContent = `${player.name}: ${player.score}`;
+                    if (player.gameOver) {
+                        li.classList.add('out');
+                    }
+                    this.liveScoresElement.appendChild(li);
+                });
             }
 
             startGame(piece, initialLevel) {
