@@ -3,6 +3,7 @@ const fs = require('fs');
 const WebSocket = require('ws');
 
 const server = http.createServer((req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*')
     if (req.url === '/' || req.url === '/index.html') {
         fs.readFile('index.html', (err, data) => {
             if (err) {
