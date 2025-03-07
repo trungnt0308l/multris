@@ -3,7 +3,6 @@ const fs = require('fs');
 const WebSocket = require('ws');
 
 const server = http.createServer((req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*')
     if (req.url === '/' || req.url === '/index.html') {
         fs.readFile('index.html', (err, data) => {
             if (err) {
@@ -118,17 +117,20 @@ wss.on('connection', (ws) => {
                     if (nextPlayer) {
                         const linesToAdd = linesCleared - 1;
                         for (let i = 0; i < linesToAdd; i++) {
-                            nextPlayer.board.shift();
-                            const newLine = Array(10).fill(1);
-                            for (let j = 0; j < 2; j++) {
-                                newLine[Math.floor(Math.random() * 10)] = 0;
+                            nextPlayer.board.shift(); // Remove a line from the top
+                            const newLine = Array(10).fill(0); // Start with empty line
+                            // Fill 8 random positions with 'G' (garbage type)
+                            const positions = Array.from({ length: 10 }, (_, i) => i);
+                            for (let j = 0; j < 8; j++) {
+                                const randomIndex = Math.floor(Math.random() * positions.length);
+                                newLine[positions[randomIndex]] = 'G';
+                                positions.splice(randomIndex, 1); // Remove used position
                             }
                             nextPlayer.board.push(newLine);
                         }
                         nextPlayer.ws.send(JSON.stringify({ type: 'addLines', board: nextPlayer.board }));
                     }
                 }
-                // Broadcast the next piece to all players
                 const nextPiece = game.pieceQueue.shift();
                 broadcast(data.gameId, { type: 'nextPiece', piece: nextPiece });
                 fillPieceQueue(game);
@@ -168,13 +170,13 @@ wss.on('connection', (ws) => {
 
 function fillPieceQueue(game) {
     const pieces = [
-        { shape: [[1, 1, 1, 1]], type: 'I' },           // I
-        { shape: [[1, 1], [1, 1]], type: 'O' },         // O
-        { shape: [[1, 1, 1], [0, 1, 0]], type: 'T' },   // T
-        { shape: [[0, 1, 1], [1, 1, 0]], type: 'S' },   // S
-        { shape: [[1, 1, 0], [0, 1, 1]], type: 'Z' },   // Z
-        { shape: [[1, 0, 0], [1, 1, 1]], type: 'J' },   // J
-        { shape: [[0, 0, 1], [1, 1, 1]], type: 'L' }    // L
+        { shape: [[1, 1, 1, 1]], type: 'I' },
+        { shape: [[1, 1], [1, 1]], type: 'O' },
+        { shape: [[1, 1, 1], [0, 1, 0]], type: 'T' },
+        { shape: [[0, 1, 1], [1, 1, 0]], type: 'S' },
+        { shape: [[1, 1, 0], [0, 1, 1]], type: 'Z' },
+        { shape: [[1, 0, 0], [1, 1, 1]], type: 'J' },
+        { shape: [[0, 0, 1], [1, 1, 1]], type: 'L' }
     ];
     while (game.pieceQueue.length < 5) {
         const pieceIndex = Math.floor(game.random() * pieces.length);
@@ -192,5 +194,5 @@ function broadcast(gameId, message) {
 }
 
 server.listen(process.env.PORT || 8080, () => {
-    console.log(`Server running on http://localhost:${process.env.PORT || 8080}`);
+    console.log(`Server running on port ${process.env.PORT || 8080}`);
 });
