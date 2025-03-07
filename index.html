@@ -191,7 +191,7 @@
     </div>
 
     <script>
-        const ws = new WebSocket(`wss://${window.location.hostname}:10000`);
+        const ws = new WebSocket(`wss://${window.location.hostname}`);
         let game = null;
 
         class Multris {
@@ -415,7 +415,9 @@
             console.log('Connected to server');
             ws.send(JSON.stringify({ type: 'listGames' }));
         };
-
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
 
