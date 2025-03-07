@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Multris - Multiplayer Tetris</title>
@@ -140,6 +140,7 @@
         .filled-Z { background: #f44336; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
         .filled-J { background: #1976d2; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
         .filled-L { background: #ff9800; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
+        .filled-G { background: #757575; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); } /* Gray for garbage */
 
         .active-I { background: #00d4ff; box-shadow: 0 0 10px #00d4ff; animation: glow 1s infinite alternate; }
         .active-O { background: #ffeb3b; box-shadow: 0 0 10px #ffeb3b; animation: glow 1s infinite alternate; }
@@ -194,6 +195,94 @@
         const ws = new WebSocket(`wss://${window.location.hostname}`);
         let game = null;
 
+        ws.onopen = () => {
+            console.log('Connected to server');
+            ws.send(JSON.stringify({ type: 'listGames' }));
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+            switch (data.type) {
+                case 'gameCreated':
+                    game = new Multris(data.playerId, data.gameId, true);
+                    document.getElementById('gameIdInput').value = data.gameId;
+                    document.getElementById('status').textContent = `Game created! ID: ${data.gameId}. Waiting for players...`;
+                    document.getElementById('startGame').style.display = 'block';
+                    document.getElementById('gameList').style.display = 'none';
+                    break;
+
+                case 'gameJoined':
+                    game = new Multris(data.playerId, data.gameId, false);
+                    document.getElementById('status').textContent = `Joined game ${data.gameId} as Player ${data.playerId}. Waiting for host...`;
+                    document.getElementById('createGame').style.display = 'none';
+                    document.getElementById('joinGame').style.display = 'none';
+                    document.getElementById('gameIdInput').disabled = true;
+                    document.getElementById('gameList').style.display = 'none';
+                    break;
+
+                case 'playerJoined':
+                    document.getElementById('status').textContent += ` Player ${data.playerId} joined!`;
+                    break;
+
+                case 'gameStarted':
+                    game.startGame(data.piece);
+                    document.getElementById('status').textContent = 'Game Started!';
+                    break;
+
+                case 'nextPiece':
+                    if (!game.gameOver) {
+                        game.queuePiece(data.piece);
+                    }
+                    break;
+
+                case 'addLines':
+                    if (!game.gameOver) game.addLines(data.board);
+                    break;
+
+                case 'playerOut':
+                    document.getElementById('status').textContent = `Player ${data.playerId} is out!`;
+                    break;
+
+                case 'gameEnded':
+                    document.getElementById('status').textContent = data.winner ? `Game Over! Player ${data.winner} wins!` : 'Game Over! No winner.';
+                    break;
+
+                case 'error':
+                    alert(data.message);
+                    break;
+
+                case 'gameList':
+                    if (!game) {
+                        const gameListUl = document.getElementById('gameListUl');
+                        gameListUl.innerHTML = '';
+                        if (data.games.length === 0) {
+                            const li = document.createElement('li');
+                            li.textContent = 'No available games';
+                            gameListUl.appendChild(li);
+                        } else {
+                            data.games.forEach(g => {
+                                const li = document.createElement('li');
+                                li.textContent = `ID: ${g.gameId} (${g.playerCount}/4 players)`;
+                                li.onclick = () => joinGameFromList(g.gameId);
+                                gameListUl.appendChild(li);
+                            });
+                        }
+                        document.getElementById('gameList').style.display = 'block';
+                    }
+                    break;
+            }
+        };
+
+        function joinGameFromList(gameId) {
+            document.getElementById('gameIdInput').value = gameId;
+            ws.send(JSON.stringify({ type: 'joinGame', gameId }));
+        }
+
         class Multris {
             constructor(playerId, gameId, isHost) {
                 this.playerId = playerId;
@@ -207,7 +296,7 @@
                 this.piecePosition = { x: 0, y: 0 };
                 this.gameOver = false;
                 this.score = 0;
-                this.pieceQueue = []; // Local queue for incoming pieces
+                this.pieceQueue = [];
                 this.initGrid();
             }
 
@@ -261,7 +350,6 @@
                     }
                 }
                 this.clearLines();
-                // Spawn the next piece from the queue if available
                 if (this.pieceQueue.length > 0 && !this.gameOver) {
                     this.spawnPiece(this.pieceQueue.shift());
                 }
@@ -409,92 +497,6 @@
                     this.spawnPiece(this.pieceQueue.shift());
                 }
             }
-        }
-
-        ws.onopen = () => {
-            console.log('Connected to server');
-            ws.send(JSON.stringify({ type: 'listGames' }));
-        };
-        ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-
-            switch (data.type) {
-                case 'gameCreated':
-                    game = new Multris(data.playerId, data.gameId, true);
-                    document.getElementById('gameIdInput').value = data.gameId;
-                    document.getElementById('status').textContent = `Game created! ID: ${data.gameId}. Waiting for players...`;
-                    document.getElementById('startGame').style.display = 'block';
-                    document.getElementById('gameList').style.display = 'none';
-                    break;
-
-                case 'gameJoined':
-                    game = new Multris(data.playerId, data.gameId, false);
-                    document.getElementById('status').textContent = `Joined game ${data.gameId} as Player ${data.playerId}. Waiting for host...`;
-                    document.getElementById('createGame').style.display = 'none';
-                    document.getElementById('joinGame').style.display = 'none';
-                    document.getElementById('gameIdInput').disabled = true;
-                    document.getElementById('gameList').style.display = 'none';
-                    break;
-
-                case 'playerJoined':
-                    document.getElementById('status').textContent += ` Player ${data.playerId} joined!`;
-                    break;
-
-                case 'gameStarted':
-                    game.startGame(data.piece);
-                    document.getElementById('status').textContent = 'Game Started!';
-                    break;
-
-                case 'nextPiece':
-                    if (!game.gameOver) {
-                        game.queuePiece(data.piece);
-                    }
-                    break;
-
-                case 'addLines':
-                    if (!game.gameOver) game.addLines(data.board);
-                    break;
-
-                case 'playerOut':
-                    document.getElementById('status').textContent = `Player ${data.playerId} is out!`;
-                    break;
-
-                case 'gameEnded':
-                    document.getElementById('status').textContent = data.winner ? `Game Over! Player ${data.winner} wins!` : 'Game Over! No winner.';
-                    break;
-
-                case 'error':
-                    alert(data.message);
-                    break;
-
-                case 'gameList':
-                    if (!game) {
-                        const gameListUl = document.getElementById('gameListUl');
-                        gameListUl.innerHTML = '';
-                        if (data.games.length === 0) {
-                            const li = document.createElement('li');
-                            li.textContent = 'No available games';
-                            gameListUl.appendChild(li);
-                        } else {
-                            data.games.forEach(g => {
-                                const li = document.createElement('li');
-                                li.textContent = `ID: ${g.gameId} (${g.playerCount}/4 players)`;
-                                li.onclick = () => joinGameFromList(g.gameId);
-                                gameListUl.appendChild(li);
-                            });
-                        }
-                        document.getElementById('gameList').style.display = 'block';
-                    }
-                    break;
-            }
-        };
-
-        function joinGameFromList(gameId) {
-            document.getElementById('gameIdInput').value = gameId;
-            ws.send(JSON.stringify({ type: 'joinGame', gameId }));
         }
 
         document.getElementById('createGame').addEventListener('click', () => {
