@@ -1,0 +1,526 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Multris - Multiplayer Tetris</title>
+    <style>
+        body {
+            margin: 0;
+            background: linear-gradient(135deg, #1e1e2f 0%, #3b3b5e 100%);
+            font-family: 'Press Start 2P', cursive;
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .controls button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #ff007a;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: 0 4px 10px rgba(255, 0, 122, 0.5);
+        }
+
+        .controls button:hover {
+            transform: scale(1.05);
+            background: #ff4da6;
+        }
+
+        .controls input {
+            padding: 10px;
+            margin: 5px;
+            border: 2px solid #00d4ff;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .controls input:focus {
+            border-color: #ff007a;
+        }
+
+        .controls p {
+            margin: 10px 0;
+            font-size: 14px;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+            animation: pulse 2s infinite;
+        }
+
+        .game-list {
+            margin-top: 15px;
+            text-align: left;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .game-list h3 {
+            font-size: 16px;
+            color: #00d4ff;
+            text-shadow: 0 0 5px #00d4ff;
+            margin-bottom: 10px;
+        }
+
+        .game-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .game-list li {
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .game-list li:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .player-board {
+            border: 4px solid #00d4ff;
+            padding: 15px;
+            background: #2a2a3d;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+            display: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 25px);
+            grid-gap: 2px;
+            background: #1e1e2f;
+            width: 270px;
+            height: 540px;
+            border-radius: 5px;
+            padding: 5px;
+        }
+
+        .cell {
+            width: 25px;
+            height: 25px;
+            background: #3b3b5e;
+            border-radius: 4px;
+            transition: background 0.1s;
+        }
+
+        .filled-I { background: #00d4ff; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
+        .filled-O { background: #ffeb3b; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
+        .filled-T { background: #ab47bc; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
+        .filled-S { background: #4caf50; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
+        .filled-Z { background: #f44336; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
+        .filled-J { background: #1976d2; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
+        .filled-L { background: #ff9800; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
+
+        .active-I { background: #00d4ff; box-shadow: 0 0 10px #00d4ff; animation: glow 1s infinite alternate; }
+        .active-O { background: #ffeb3b; box-shadow: 0 0 10px #ffeb3b; animation: glow 1s infinite alternate; }
+        .active-T { background: #ab47bc; box-shadow: 0 0 10px #ab47bc; animation: glow 1s infinite alternate; }
+        .active-S { background: #4caf50; box-shadow: 0 0 10px #4caf50; animation: glow 1s infinite alternate; }
+        .active-Z { background: #f44336; box-shadow: 0 0 10px #f44336; animation: glow 1s infinite alternate; }
+        .active-J { background: #1976d2; box-shadow: 0 0 10px #1976d2; animation: glow 1s infinite alternate; }
+        .active-L { background: #ff9800; box-shadow: 0 0 10px #ff9800; animation: glow 1s infinite alternate; }
+
+        .score {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 18px;
+            color: #00d4ff;
+            text-shadow: 0 0 5px #00d4ff;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px; }
+            100% { box-shadow: 0 0 15px; }
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="controls">
+            <button id="createGame">Create Game</button>
+            <button id="joinGame">Join Game</button>
+            <input id="gameIdInput" type="text" placeholder="Enter Game ID">
+            <button id="startGame" style="display: none;">Start Game</button>
+            <p id="status">Welcome to Multris! Controls: ← (Left), → (Right), ↓ (Down), ↑ (Rotate)</p>
+            <div class="game-list" id="gameList" style="display: none;">
+                <h3>Available Games</h3>
+                <ul id="gameListUl"></ul>
+            </div>
+        </div>
+        <div class="player-board" id="playerBoard">
+            <div class="grid" id="grid"></div>
+            <div class="score" id="score">Score: 0</div>
+        </div>
+    </div>
+
+    <script>
+        const ws = new WebSocket(`ws://${window.location.hostname}:8080`);
+        let game = null;
+
+        class Multris {
+            constructor(playerId, gameId, isHost) {
+                this.playerId = playerId;
+                this.gameId = gameId;
+                this.isHost = isHost;
+                this.grid = document.getElementById('grid');
+                this.scoreElement = document.getElementById('score');
+                this.board = Array(20).fill().map(() => Array(10).fill(0));
+                this.currentPiece = null;
+                this.currentPieceType = null;
+                this.piecePosition = { x: 0, y: 0 };
+                this.gameOver = false;
+                this.score = 0;
+                this.pieceQueue = []; // Local queue for incoming pieces
+                this.initGrid();
+            }
+
+            initGrid() {
+                for (let i = 0; i < 200; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    this.grid.appendChild(cell);
+                }
+            }
+
+            spawnPiece(piece) {
+                this.currentPiece = piece.shape;
+                this.currentPieceType = piece.type;
+                this.piecePosition = { x: Math.floor((10 - piece.shape[0].length) / 2), y: 0 };
+                if (!this.canPlacePiece()) {
+                    this.gameOver = true;
+                    this.grid.style.opacity = '0.5';
+                    ws.send(JSON.stringify({ type: 'gameOver', gameId: this.gameId, playerId: this.playerId }));
+                    document.getElementById('status').textContent = `Player ${this.playerId} is out!`;
+                }
+                this.render();
+            }
+
+            canPlacePiece() {
+                for (let y = 0; y < this.currentPiece.length; y++) {
+                    for (let x = 0; x < this.currentPiece[y].length; x++) {
+                        if (this.currentPiece[y][x]) {
+                            const boardX = this.piecePosition.x + x;
+                            const boardY = this.piecePosition.y + y;
+                            if (boardX < 0 || boardX >= 10 || boardY >= 20 || 
+                                (boardY >= 0 && this.board[boardY][boardX])) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+                return true;
+            }
+
+            mergePiece() {
+                for (let y = 0; y < this.currentPiece.length; y++) {
+                    for (let x = 0; x < this.currentPiece[y].length; x++) {
+                        if (this.currentPiece[y][x]) {
+                            const boardX = this.piecePosition.x + x;
+                            const boardY = this.piecePosition.y + y;
+                            if (boardY >= 0) {
+                                this.board[boardY][boardX] = this.currentPieceType;
+                            }
+                        }
+                    }
+                }
+                this.clearLines();
+                // Spawn the next piece from the queue if available
+                if (this.pieceQueue.length > 0 && !this.gameOver) {
+                    this.spawnPiece(this.pieceQueue.shift());
+                }
+            }
+
+            clearLines() {
+                let linesCleared = 0;
+                const rowsToClear = [];
+
+                for (let y = 19; y >= 0; y--) {
+                    if (this.board[y].every(cell => cell !== 0)) {
+                        rowsToClear.push(y);
+                        linesCleared++;
+                    }
+                }
+
+                if (linesCleared > 0) {
+                    rowsToClear.sort((a, b) => b - a);
+                    for (const y of rowsToClear) {
+                        this.board.splice(y, 1);
+                    }
+                    for (let i = 0; i < linesCleared; i++) {
+                        this.board.unshift(Array(10).fill(0));
+                    }
+                    this.score += linesCleared * 10;
+                    this.scoreElement.textContent = `Score: ${this.score}`;
+                }
+
+                ws.send(JSON.stringify({
+                    type: 'clearLines',
+                    gameId: this.gameId,
+                    playerId: this.playerId,
+                    linesCleared,
+                    board: this.board
+                }));
+            }
+
+            addLines(board) {
+                this.board = board;
+                this.render();
+                if (!this.canPlacePiece()) {
+                    this.gameOver = true;
+                    this.grid.style.opacity = '0.5';
+                    ws.send(JSON.stringify({ type: 'gameOver', gameId: this.gameId, playerId: this.playerId }));
+                    document.getElementById('status').textContent = `Player ${this.playerId} is out!`;
+                }
+            }
+
+            movePiece(dx, dy) {
+                this.piecePosition.x += dx;
+                this.piecePosition.y += dy;
+                if (!this.canPlacePiece()) {
+                    this.piecePosition.x -= dx;
+                    this.piecePosition.y -= dy;
+                    if (dy > 0) {
+                        this.mergePiece();
+                    }
+                }
+                this.render();
+            }
+
+            rotatePiece() {
+                const rotated = Array(this.currentPiece[0].length).fill().map(() => Array(this.currentPiece.length).fill(0));
+                for (let y = 0; y < this.currentPiece.length; y++) {
+                    for (let x = 0; x < this.currentPiece[y].length; x++) {
+                        rotated[x][this.currentPiece.length - 1 - y] = this.currentPiece[y][x];
+                    }
+                }
+                const oldPiece = this.currentPiece;
+                const oldX = this.piecePosition.x;
+
+                this.currentPiece = rotated;
+                if (this.canPlacePiece()) {
+                    this.render();
+                    return;
+                }
+
+                const pieceWidth = rotated[0].length;
+                const maxShift = Math.max(0, Math.min(10 - pieceWidth, this.piecePosition.x));
+                const minShift = Math.max(0, this.piecePosition.x);
+
+                for (let shift = 1; shift <= maxShift; shift++) {
+                    this.piecePosition.x = oldX + shift;
+                    if (this.canPlacePiece()) {
+                        this.render();
+                        return;
+                    }
+                }
+
+                for (let shift = 1; shift <= minShift; shift++) {
+                    this.piecePosition.x = oldX - shift;
+                    if (this.canPlacePiece()) {
+                        this.render();
+                        return;
+                    }
+                }
+
+                this.currentPiece = oldPiece;
+                this.piecePosition.x = oldX;
+                this.render();
+            }
+
+            render() {
+                const cells = this.grid.children;
+                for (let i = 0; i < 200; i++) {
+                    const y = Math.floor(i / 10);
+                    const x = i % 10;
+                    const cellValue = this.board[y][x];
+                    cells[i].className = 'cell';
+                    if (cellValue) {
+                        cells[i].className += ` filled-${cellValue}`;
+                    }
+                }
+                if (!this.gameOver && this.currentPiece) {
+                    for (let y = 0; y < this.currentPiece.length; y++) {
+                        for (let x = 0; x < this.currentPiece[y].length; x++) {
+                            if (this.currentPiece[y][x]) {
+                                const boardX = this.piecePosition.x + x;
+                                const boardY = this.piecePosition.y + y;
+                                if (boardY >= 0 && boardY < 20 && boardX >= 0 && boardX < 10) {
+                                    cells[boardY * 10 + boardX].className = `cell active-${this.currentPieceType}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            update() {
+                if (!this.gameOver && this.gameStarted) {
+                    this.movePiece(0, 1);
+                }
+            }
+
+            startGame(piece) {
+                this.gameStarted = true;
+                document.getElementById('playerBoard').style.display = 'block';
+                this.spawnPiece(piece);
+                setInterval(() => this.update(), 500);
+            }
+
+            queuePiece(piece) {
+                this.pieceQueue.push(piece);
+                if (!this.currentPiece && !this.gameOver) {
+                    this.spawnPiece(this.pieceQueue.shift());
+                }
+            }
+        }
+
+        ws.onopen = () => {
+            console.log('Connected to server');
+            ws.send(JSON.stringify({ type: 'listGames' }));
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+            switch (data.type) {
+                case 'gameCreated':
+                    game = new Multris(data.playerId, data.gameId, true);
+                    document.getElementById('gameIdInput').value = data.gameId;
+                    document.getElementById('status').textContent = `Game created! ID: ${data.gameId}. Waiting for players...`;
+                    document.getElementById('startGame').style.display = 'block';
+                    document.getElementById('gameList').style.display = 'none';
+                    break;
+
+                case 'gameJoined':
+                    game = new Multris(data.playerId, data.gameId, false);
+                    document.getElementById('status').textContent = `Joined game ${data.gameId} as Player ${data.playerId}. Waiting for host...`;
+                    document.getElementById('createGame').style.display = 'none';
+                    document.getElementById('joinGame').style.display = 'none';
+                    document.getElementById('gameIdInput').disabled = true;
+                    document.getElementById('gameList').style.display = 'none';
+                    break;
+
+                case 'playerJoined':
+                    document.getElementById('status').textContent += ` Player ${data.playerId} joined!`;
+                    break;
+
+                case 'gameStarted':
+                    game.startGame(data.piece);
+                    document.getElementById('status').textContent = 'Game Started!';
+                    break;
+
+                case 'nextPiece':
+                    if (!game.gameOver) {
+                        game.queuePiece(data.piece);
+                    }
+                    break;
+
+                case 'addLines':
+                    if (!game.gameOver) game.addLines(data.board);
+                    break;
+
+                case 'playerOut':
+                    document.getElementById('status').textContent = `Player ${data.playerId} is out!`;
+                    break;
+
+                case 'gameEnded':
+                    document.getElementById('status').textContent = data.winner ? `Game Over! Player ${data.winner} wins!` : 'Game Over! No winner.';
+                    break;
+
+                case 'error':
+                    alert(data.message);
+                    break;
+
+                case 'gameList':
+                    if (!game) {
+                        const gameListUl = document.getElementById('gameListUl');
+                        gameListUl.innerHTML = '';
+                        if (data.games.length === 0) {
+                            const li = document.createElement('li');
+                            li.textContent = 'No available games';
+                            gameListUl.appendChild(li);
+                        } else {
+                            data.games.forEach(g => {
+                                const li = document.createElement('li');
+                                li.textContent = `ID: ${g.gameId} (${g.playerCount}/4 players)`;
+                                li.onclick = () => joinGameFromList(g.gameId);
+                                gameListUl.appendChild(li);
+                            });
+                        }
+                        document.getElementById('gameList').style.display = 'block';
+                    }
+                    break;
+            }
+        };
+
+        function joinGameFromList(gameId) {
+            document.getElementById('gameIdInput').value = gameId;
+            ws.send(JSON.stringify({ type: 'joinGame', gameId }));
+        }
+
+        document.getElementById('createGame').addEventListener('click', () => {
+            ws.send(JSON.stringify({ type: 'createGame' }));
+        });
+
+        document.getElementById('joinGame').addEventListener('click', () => {
+            const gameId = document.getElementById('gameIdInput').value.trim();
+            if (!gameId) {
+                alert('Please enter a Game ID!');
+                return;
+            }
+            ws.send(JSON.stringify({ type: 'joinGame', gameId }));
+        });
+
+        document.getElementById('startGame').addEventListener('click', () => {
+            if (game && game.isHost) {
+                ws.send(JSON.stringify({ type: 'startGame', gameId: game.gameId }));
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (!game || !game.gameStarted || game.gameOver) return;
+            if (e.key === 'ArrowLeft') game.movePiece(-1, 0);
+            if (e.key === 'ArrowRight') game.movePiece(1, 0);
+            if (e.key === 'ArrowDown') game.movePiece(0, 1);
+            if (e.key === 'ArrowUp') game.rotatePiece();
+        });
+    </script>
+</body>
+</html>
