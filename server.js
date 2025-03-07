@@ -50,14 +50,14 @@ wss.on('connection', (ws) => {
             case 'createGame':
                 const gameId = Math.random().toString(36).substr(2, 5).toUpperCase();
                 games[gameId] = {
-                    players: [{ ws, id: 1, board: Array(20).fill().map(() => Array(10).fill(0)), gameOver: false }],
+                    players: [{ ws, id: 1, name: data.name || `Player 1`, board: Array(20).fill().map(() => Array(10).fill(0)), gameOver: false, score: 0 }],
                     pieceQueue: [],
                     random: seededRandom(parseInt(gameId, 36)),
                     started: false
                 };
                 fillPieceQueue(games[gameId]);
-                ws.send(JSON.stringify({ type: 'gameCreated', gameId, playerId: 1 }));
-                console.log(`Game ${gameId} created by Player 1`);
+                ws.send(JSON.stringify({ type: 'gameCreated', gameId, playerId: 1, name: data.name || `Player 1` }));
+                console.log(`Game ${gameId} created by ${data.name || 'Player 1'}`);
                 break;
 
             case 'joinGame':
@@ -83,10 +83,10 @@ wss.on('connection', (ws) => {
                     return;
                 }
                 const playerId = games[joinGameId].players.length + 1;
-                games[joinGameId].players.push({ ws, id: playerId, board: Array(20).fill().map(() => Array(10).fill(0)), gameOver: false });
-                ws.send(JSON.stringify({ type: 'gameJoined', gameId: joinGameId, playerId }));
-                broadcast(joinGameId, { type: 'playerJoined', playerId });
-                console.log(`Player ${playerId} joined game ${joinGameId}`);
+                games[joinGameId].players.push({ ws, id: playerId, name: data.name || `Player ${playerId}`, board: Array(20).fill().map(() => Array(10).fill(0)), gameOver: false, score: 0 });
+                ws.send(JSON.stringify({ type: 'gameJoined', gameId: joinGameId, playerId, name: data.name || `Player ${playerId}` }));
+                broadcast(joinGameId, { type: 'playerJoined', playerId, name: data.name || `Player ${playerId}` });
+                console.log(`${data.name || `Player ${playerId}`} joined game ${joinGameId}`);
                 break;
 
             case 'startGame':
@@ -104,6 +104,7 @@ wss.on('connection', (ws) => {
                 if (!game || game.players[data.playerId - 1].gameOver) return;
                 const linesCleared = data.linesCleared;
                 game.players[data.playerId - 1].board = data.board;
+                game.players[data.playerId - 1].score = data.score; // Update score
                 if (linesCleared > 0) {
                     const currentIndex = game.players.findIndex(p => p.id === data.playerId);
                     let nextPlayer = null;
@@ -117,14 +118,13 @@ wss.on('connection', (ws) => {
                     if (nextPlayer) {
                         const linesToAdd = linesCleared - 1;
                         for (let i = 0; i < linesToAdd; i++) {
-                            nextPlayer.board.shift(); // Remove a line from the top
-                            const newLine = Array(10).fill(0); // Start with empty line
-                            // Fill 8 random positions with 'G' (garbage type)
+                            nextPlayer.board.shift();
+                            const newLine = Array(10).fill(0);
                             const positions = Array.from({ length: 10 }, (_, i) => i);
                             for (let j = 0; j < 8; j++) {
                                 const randomIndex = Math.floor(Math.random() * positions.length);
                                 newLine[positions[randomIndex]] = 'G';
-                                positions.splice(randomIndex, 1); // Remove used position
+                                positions.splice(randomIndex, 1);
                             }
                             nextPlayer.board.push(newLine);
                         }
@@ -140,10 +140,17 @@ wss.on('connection', (ws) => {
                 const g = games[data.gameId];
                 if (!g) return;
                 g.players[data.playerId - 1].gameOver = true;
-                broadcast(data.gameId, { type: 'playerOut', playerId: data.playerId });
+                g.players[data.playerId - 1].score = data.score;
+                broadcast(data.gameId, { type: 'playerOut', playerId: data.playerId, name: g.players[data.playerId - 1].name });
                 const activePlayers = g.players.filter(p => !p.gameOver);
                 if (activePlayers.length <= 1) {
-                    broadcast(data.gameId, { type: 'gameEnded', winner: activePlayers.length === 1 ? activePlayers[0].id : null });
+                    const results = g.players.map(p => ({
+                        id: p.id,
+                        name: p.name,
+                        score: p.score || 0,
+                        gameOver: p.gameOver
+                    }));
+                    broadcast(data.gameId, { type: 'gameEnded', winner: activePlayers.length === 1 ? activePlayers[0].id : null, results });
                     delete games[data.gameId];
                 }
                 break;
