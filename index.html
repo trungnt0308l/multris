@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Multris - Multiplayer Tetris</title>
+    <title>Multris - Chibi Tetris</title>
     <style>
         body {
             margin: 0;
-            background: linear-gradient(135deg, #1e1e2f 0%, #3b3b5e 100%);
-            font-family: 'Press Start 2P', cursive;
-            color: #fff;
+            background: linear-gradient(135deg, #fce4ec 0%, #e1bee7 100%);
+            font-family: 'Comic Neue', cursive;
+            color: #4a2c3d;
             height: 100vh;
             display: flex;
             justify-content: center;
@@ -19,11 +19,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(10px);
+            padding: 25px;
+            background: rgba(255, 245, 247, 0.8);
+            border-radius: 25px;
+            box-shadow: 0 8px 20px rgba(244, 143, 177, 0.3);
             position: relative;
             z-index: 1;
         }
@@ -32,38 +31,38 @@
             text-align: center;
         }
 
-        .name-entry input {
-            padding: 10px;
-            margin: 10px;
-            border: 2px solid #00d4ff;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-            font-size: 16px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
+            .name-entry input {
+                padding: 12px;
+                margin: 10px;
+                border: 3px solid #ffcccb;
+                border-radius: 15px;
+                background: #fff;
+                color: #4a2c3d;
+                font-size: 16px;
+                outline: none;
+                transition: border-color 0.2s;
+            }
 
-        .name-entry input:focus {
-            border-color: #ff007a;
-        }
+                .name-entry input:focus {
+                    border-color: #f48fb1;
+                }
 
-        .name-entry button {
-            padding: 10px 20px;
-            background: #ff007a;
-            border: none;
-            border-radius: 8px;
-            color: #fff;
-            font-size: 16px;
-            cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
-            box-shadow: 0 4px 10px rgba(255, 0, 122, 0.5);
-        }
+            .name-entry button {
+                padding: 12px 25px;
+                background: #f06292;
+                border: none;
+                border-radius: 15px;
+                color: #fff;
+                font-size: 16px;
+                cursor: pointer;
+                transition: transform 0.2s, background 0.2s;
+                box-shadow: 0 5px 15px rgba(240, 98, 146, 0.4);
+            }
 
-        .name-entry button:hover {
-            transform: scale(1.05);
-            background: #ff4da6;
-        }
+                .name-entry button:hover {
+                    transform: scale(1.1);
+                    background: #ff8a9d;
+                }
 
         .controls {
             margin-bottom: 20px;
@@ -77,48 +76,49 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 10px;
-            margin-bottom: 10px;
+            gap: 12px;
+            margin-bottom: 12px;
         }
 
         .controls button {
             padding: 10px 20px;
-            background: #ff007a;
+            background: #ff8a9d;
             border: none;
-            border-radius: 8px;
+            border-radius: 15px;
             color: #fff;
             font-size: 16px;
             cursor: pointer;
             transition: transform 0.2s, background 0.2s;
-            box-shadow: 0 4px 10px rgba(255, 0, 122, 0.5);
+            box-shadow: 0 5px 15px rgba(240, 98, 146, 0.3);
             min-width: 120px;
         }
 
-        .controls button:hover {
-            transform: scale(1.05);
-            background: #ff4da6;
-        }
+            .controls button:hover {
+                transform: scale(1.1);
+                background: #f06292;
+            }
 
         .controls input {
             padding: 10px;
             width: 150px;
-            border: 2px solid #00d4ff;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
+            border: 3px solid #ffcccb;
+            border-radius: 15px;
+            background: #fff;
+            color: #4a2c3d;
             font-size: 16px;
             outline: none;
             transition: border-color 0.2s;
         }
 
-        .controls input:focus {
-            border-color: #ff007a;
-        }
+            .controls input:focus {
+                border-color: #f48fb1;
+            }
 
         .controls p {
             margin: 10px 0;
             font-size: 14px;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+            color: #f06292;
+            text-shadow: 0 0 3px rgba(240, 98, 146, 0.5);
             animation: pulse 2s infinite;
         }
 
@@ -129,45 +129,46 @@
             max-width: 300px;
         }
 
-        .game-list h3 {
-            font-size: 16px;
-            color: #00d4ff;
-            text-shadow: 0 0 5px #00d4ff;
-            margin-bottom: 10px;
-        }
+            .game-list h3 {
+                font-size: 16px;
+                color: #ba68c8;
+                text-shadow: 0 0 3px rgba(186, 104, 200, 0.5);
+                margin-bottom: 10px;
+            }
 
-        .game-list ul {
-            list-style: none;
-            padding: 0;
-        }
+            .game-list ul {
+                list-style: none;
+                padding: 0;
+            }
 
-        .game-list li {
-            padding: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
-            margin-bottom: 5px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
+            .game-list li {
+                padding: 10px;
+                background: rgba(255, 245, 247, 0.7);
+                border-radius: 12px;
+                margin-bottom: 8px;
+                cursor: pointer;
+                transition: background 0.2s, transform 0.2s;
+            }
 
-        .game-list li:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
+                .game-list li:hover {
+                    background: rgba(244, 143, 177, 0.3);
+                    transform: scale(1.05);
+                }
 
         .player-name {
-            font-size: 20px;
-            color: #00d4ff;
-            text-shadow: 0 0 8px #00d4ff;
-            margin-bottom: 10px;
+            font-size: 22px;
+            color: #ba68c8;
+            text-shadow: 0 0 5px rgba(186, 104, 200, 0.6);
+            margin-bottom: 12px;
             text-align: center;
         }
 
         .player-board {
-            border: 4px solid #00d4ff;
-            padding: 15px;
-            background: #2a2a3d;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+            border: 4px solid #ffcccb;
+            padding: 20px;
+            background: #fce4ec;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(244, 143, 177, 0.3);
             display: none;
             position: relative;
             overflow: hidden;
@@ -182,12 +183,13 @@
         .grid {
             display: grid;
             grid-template-columns: repeat(10, 25px);
-            grid-gap: 2px;
-            background: #1e1e2f;
-            width: 270px;
-            height: 540px;
-            border-radius: 5px;
-            padding: 5px;
+            grid-gap: 3px;
+            background: #fff;
+            width: 280px;
+            height: 560px;
+            border-radius: 15px;
+            padding: 8px;
+            box-shadow: inset 0 0 10px rgba(244, 143, 177, 0.2);
         }
 
         .next-piece-container {
@@ -201,105 +203,172 @@
         .next-piece-grid {
             display: grid;
             grid-template-columns: repeat(4, 25px);
-            grid-gap: 2px;
-            background: #1e1e2f;
-            width: 108px;
-            height: 108px;
-            border-radius: 5px;
-            padding: 5px;
+            grid-gap: 3px;
+            background: #fff;
+            width: 112px;
+            height: 112px;
+            border-radius: 12px;
+            padding: 6px;
+            box-shadow: inset 0 0 5px rgba(244, 143, 177, 0.2);
         }
 
         .score, .level {
-            margin-top: 10px;
-            font-size: 16px;
-            color: #00d4ff;
-            text-shadow: 0 0 5px #00d4ff;
+            margin-top: 12px;
+            font-size: 14px;
+            color: #f06292;
+            text-shadow: 0 0 3px rgba(240, 98, 146, 0.5);
         }
 
         .live-dashboard {
             margin-top: 15px;
-            width: 140px;
-            background: linear-gradient(135deg, rgba(30, 30, 47, 0.95), rgba(59, 59, 94, 0.95));
-            border: 2px solid #00d4ff;
-            border-radius: 8px;
-            padding: 10px;
-            box-shadow: 0 0 15px rgba(0, 212, 255, 0.4), inset 0 0 5px rgba(0, 212, 255, 0.2);
+            width: 150px;
+            background: linear-gradient(135deg, #f8bbd0, #e1bee7);
+            border: 3px solid #ffcccb;
+            border-radius: 15px;
+            padding: 12px;
+            box-shadow: 0 5px 15px rgba(244, 143, 177, 0.3), inset 0 0 5px rgba(255, 245, 247, 0.5);
         }
 
-        .live-dashboard h4 {
-            margin: 0 0 10px 0;
-            font-size: 12px;
-            color: #00d4ff;
-            text-shadow: 0 0 5px #00d4ff;
-            text-align: center;
-            letter-spacing: 1px;
-        }
+            .live-dashboard h4 {
+                margin: 0 0 10px 0;
+                font-size: 12px;
+                color: #ba68c8;
+                text-shadow: 0 0 3px rgba(186, 104, 200, 0.5);
+                text-align: center;
+                letter-spacing: 1px;
+            }
 
-        .live-dashboard ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
+            .live-dashboard ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
 
-        .live-dashboard li {
-            font-size: 11px;
-            margin-bottom: 8px;
-            color: #fff;
-            text-shadow: 0 0 3px rgba(255, 255, 255, 0.5);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 4px 6px;
-            border-radius: 4px;
-            transition: transform 0.2s, background 0.2s;
-        }
+            .live-dashboard li {
+                font-size: 11px;
+                margin-bottom: 8px;
+                color: #4a2c3d;
+                text-shadow: 0 0 2px rgba(244, 143, 177, 0.5);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 5px 8px;
+                border-radius: 10px;
+                transition: transform 0.2s, background 0.2s;
+            }
 
-        .live-dashboard li:hover {
-            transform: scale(1.02);
-        }
+                .live-dashboard li:hover {
+                    transform: scale(1.03);
+                    background: rgba(255, 245, 247, 0.5);
+                }
 
-        .live-dashboard li.active {
-            background: rgba(0, 212, 255, 0.25);
-            border-left: 3px solid #00d4ff;
-        }
+                .live-dashboard li.active {
+                    background: rgba(186, 104, 200, 0.2);
+                    border-left: 3px solid #ba68c8;
+                }
 
-        .live-dashboard li.out {
-            color: #f44336;
-            text-decoration: line-through;
-            background: rgba(244, 67, 54, 0.15);
-            border-left: 3px solid #f44336;
-        }
+                .live-dashboard li.out {
+                    color: #ef5350;
+                    text-decoration: line-through;
+                    background: rgba(239, 83, 80, 0.1);
+                    border-left: 3px solid #ef5350;
+                }
 
-        .live-dashboard .score-value {
-            color: #ffeb3b;
-            font-weight: bold;
-            text-shadow: 0 0 3px rgba(255, 235, 59, 0.5);
-        }
+            .live-dashboard .score-value {
+                color: #ffb300;
+                font-weight: bold;
+                text-shadow: 0 0 3px rgba(255, 179, 0, 0.5);
+            }
 
         .cell {
             width: 25px;
             height: 25px;
-            background: #3b3b5e;
-            border-radius: 4px;
+            background: #f8bbd0;
+            border-radius: 8px;
             transition: background 0.1s;
         }
 
-        .filled-I { background: #00d4ff; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
-        .filled-O { background: #ffeb3b; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
-        .filled-T { background: #ab47bc; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
-        .filled-S { background: #4caf50; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
-        .filled-Z { background: #f44336; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
-        .filled-J { background: #1976d2; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
-        .filled-L { background: #ff9800; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
-        .filled-G { background: #757575; box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5); }
+        .filled-I {
+            background: #81d4fa;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        }
 
-        .active-I { background: #00d4ff; box-shadow: 0 0 10px #00d4ff; animation: glow 1s infinite alternate; }
-        .active-O { background: #ffeb3b; box-shadow: 0 0 10px #ffeb3b; animation: glow 1s infinite alternate; }
-        .active-T { background: #ab47bc; box-shadow: 0 0 10px #ab47bc; animation: glow 1s infinite alternate; }
-        .active-S { background: #4caf50; box-shadow: 0 0 10px #4caf50; animation: glow 1s infinite alternate; }
-        .active-Z { background: #f44336; box-shadow: 0 0 10px #f44336; animation: glow 1s infinite alternate; }
-        .active-J { background: #1976d2; box-shadow: 0 0 10px #1976d2; animation: glow 1s infinite alternate; }
-        .active-L { background: #ff9800; box-shadow: 0 0 10px #ff9800; animation: glow 1s infinite alternate; }
+        .filled-O {
+            background: #fff59d;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .filled-T {
+            background: #ba68c8;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .filled-S {
+            background: #a5d6a7;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .filled-Z {
+            background: #ef5350;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .filled-J {
+            background: #64b5f6;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .filled-L {
+            background: #ffb300;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .filled-G {
+            background: #b0bec5;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .active-I {
+            background: #81d4fa;
+            box-shadow: 0 0 8px #81d4fa;
+            animation: sparkle 1s infinite alternate;
+        }
+
+        .active-O {
+            background: #fff59d;
+            box-shadow: 0 0 8px #fff59d;
+            animation: sparkle 1s infinite alternate;
+        }
+
+        .active-T {
+            background: #ba68c8;
+            box-shadow: 0 0 8px #ba68c8;
+            animation: sparkle 1s infinite alternate;
+        }
+
+        .active-S {
+            background: #a5d6a7;
+            box-shadow: 0 0 8px #a5d6a7;
+            animation: sparkle 1s infinite alternate;
+        }
+
+        .active-Z {
+            background: #ef5350;
+            box-shadow: 0 0 8px #ef5350;
+            animation: sparkle 1s infinite alternate;
+        }
+
+        .active-J {
+            background: #64b5f6;
+            box-shadow: 0 0 8px #64b5f6;
+            animation: sparkle 1s infinite alternate;
+        }
+
+        .active-L {
+            background: #ffb300;
+            box-shadow: 0 0 8px #ffb300;
+            animation: sparkle 1s infinite alternate;
+        }
 
         .dashboard {
             display: none;
@@ -309,17 +378,17 @@
             z-index: 2;
         }
 
-        .dashboard h2 {
-            font-size: 20px;
-            color: #00d4ff;
-            text-shadow: 0 0 5px #00d4ff;
-            margin-bottom: 15px;
-        }
+            .dashboard h2 {
+                font-size: 20px;
+                color: #f06292;
+                text-shadow: 0 0 5px rgba(240, 98, 146, 0.5);
+                margin-bottom: 15px;
+            }
 
         .trophy {
             font-size: 40px;
-            color: #ffeb3b;
-            text-shadow: 0 0 10px #ffeb3b;
+            color: #ffb300;
+            text-shadow: 0 0 10px #ffb300;
             margin-bottom: 10px;
             animation: bounce 1s infinite;
         }
@@ -330,46 +399,68 @@
         }
 
         .dashboard li {
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
-            margin-bottom: 5px;
+            padding: 12px;
+            background: rgba(255, 245, 247, 0.7);
+            border-radius: 12px;
+            margin-bottom: 8px;
             font-size: 16px;
+            color: #4a2c3d;
         }
 
         .dashboard button {
-            padding: 10px 20px;
+            padding: 12px 25px;
             margin-top: 15px;
-            background: #ff007a;
+            background: #f06292;
             border: none;
-            border-radius: 8px;
+            border-radius: 15px;
             color: #fff;
             font-size: 16px;
             cursor: pointer;
             transition: transform 0.2s, background 0.2s;
-            box-shadow: 0 4px 10px rgba(255, 0, 122, 0.5);
+            box-shadow: 0 5px 15px rgba(240, 98, 146, 0.4);
         }
 
-        .dashboard button:hover {
-            transform: scale(1.05);
-            background: #ff4da6;
-        }
+            .dashboard button:hover {
+                transform: scale(1.1);
+                background: #ff8a9d;
+            }
 
         @keyframes pulse {
-            0% { opacity: 0.8; }
-            50% { opacity: 1; }
-            100% { opacity: 0.8; }
+            0% {
+                opacity: 0.8;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.8;
+            }
         }
 
-        @keyframes glow {
-            0% { box-shadow: 0 0 5px; }
-            100% { box-shadow: 0 0 15px; }
+        @keyframes sparkle {
+            0% {
+                box-shadow: 0 0 5px;
+            }
+
+            100% {
+                box-shadow: 0 0 10px;
+            }
         }
 
         @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-10px); }
-            60% { transform: translateY(-5px); }
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-10px);
+            }
+
+            60% {
+                transform: translateY(-5px);
+            }
         }
 
         #confetti-canvas {
@@ -382,7 +473,7 @@
             z-index: 0;
         }
 
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
     </style>
 </head>
 <body>
@@ -580,14 +671,14 @@
                 particleCount: 100,
                 spread: 70,
                 origin: { y: 0.6 },
-                colors: ['#00d4ff', '#ffeb3b', '#ff007a']
+                colors: ['#f06292', '#ffb300', '#ba68c8', '#81d4fa']
             });
             setTimeout(() => {
                 confetti({
                     particleCount: 50,
                     spread: 90,
                     origin: { y: 0.8 },
-                    colors: ['#00d4ff', '#ffeb3b', '#ff007a']
+                    colors: ['#f06292', '#ffb300', '#ba68c8', '#81d4fa']
                 });
             }, 500);
         }
@@ -672,7 +763,7 @@
                         if (this.currentPiece[y][x]) {
                             const boardX = this.piecePosition.x + x;
                             const boardY = this.piecePosition.y + y;
-                            if (boardX < 0 || boardX >= 10 || boardY >= 20 || 
+                            if (boardX < 0 || boardX >= 10 || boardY >= 20 ||
                                 (boardY >= 0 && this.board[boardY][boardX])) {
                                 return false;
                             }
