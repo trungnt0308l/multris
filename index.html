@@ -576,6 +576,9 @@
                         console.log(`Starting game for ${game.name} with piece:`, data.piece);
                         game.startGame(data.piece, data.level);
                         document.getElementById('status').textContent = 'Game Started!';
+                        if (game.isHost) {
+                            document.getElementById('startGame').style.display = 'none';
+                        }
                     } else {
                         console.error('Game not initialized for player when gameStarted received');
                     }
@@ -591,6 +594,9 @@
                 case 'playerOut':
                     if (game) {
                         document.getElementById('status').textContent = `${data.name} is out!`;
+                        if (data.playerId === game.playerId) {
+                            showDashboard(data.results, null);
+                        }
                     }
                     break;
                 case 'gameEnded':
@@ -657,6 +663,8 @@
             });
             if (winner) {
                 document.getElementById('trophy').style.display = 'block';
+            } else {
+                document.getElementById('trophy').style.display = 'none';
             }
             dashboard.style.display = 'block';
         }
@@ -680,11 +688,9 @@
 
         document.getElementById('playAgain').addEventListener('click', () => {
             game = null;
-            playerName = '';
             document.getElementById('dashboard').style.display = 'none';
             document.getElementById('trophy').style.display = 'none';
-            document.getElementById('nameEntry').style.display = 'block';
-            document.getElementById('controls').style.display = 'none';
+            document.getElementById('controls').style.display = 'block';
             document.getElementById('playerBoard').style.display = 'none';
             document.getElementById('playerName').style.display = 'none';
             document.getElementById('gameIdInput').value = '';
@@ -692,7 +698,8 @@
             document.getElementById('createGame').style.display = 'inline';
             document.getElementById('joinGame').style.display = 'inline';
             document.getElementById('startGame').style.display = 'none';
-            document.getElementById('status').textContent = 'Welcome to Multris! Controls: ← (Left), → (Right), ↓ (Down), ↑ (Rotate)';
+            document.getElementById('status').textContent = `Welcome back, ${playerName}! Controls: ← (Left), → (Right), ↓ (Down), ↑ (Rotate)`;
+            ws.send(JSON.stringify({ type: 'listGames' }));
         });
 
         class Multris {
@@ -807,7 +814,7 @@
                     }
                     this.score += linesCleared * 10;
                     this.scoreElement.textContent = `Score: ${this.score}`;
-                    const newLevel = Math.floor(this.score / 100) + 1;
+                    const newLevel = Math.floor(this.score / 20) + 1; // Changed from 100 to 20
                     if (newLevel > this.level) {
                         this.setLevel(newLevel);
                     }
